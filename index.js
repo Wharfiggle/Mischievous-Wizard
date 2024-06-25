@@ -19,6 +19,7 @@ const { Client, Collection, GatewayIntentBits } = require("discord.js");
 const client = new Client({ intents: [ GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent ] });
 
 client.commands = new Collection();
+client.templates = [];
 client.cooldowns = new Collection();
 
 //set up all commands in commands folder
@@ -33,7 +34,13 @@ for(const folder of commandFolders) //iterate through each folder in commands fo
 		const filePath = path.join(commandsPath, file);
 		const command = require(filePath);
 		// Set a new item in the Collection with the key as the command name and the value as the exported module
-		if("data" in command && "execute" in command)
+		if(folder == "templates")
+		{
+			const name = file.substring(0, file.indexOf(".")); //file name with no extenstion
+			client.commands.set(name, command);
+			client.templates.push(name);
+		}
+		else if("data" in command && "execute" in command)
 			client.commands.set(command.data.name, command);
 		else
 			//			V backticks, not apostrophes. Can only do string interpolation with backticks
@@ -143,23 +150,31 @@ client.on('messageCreate', async (message) =>
 				commandEndIndex += 3;
 		}
 
-		if(command == "enlarge")
+		try
 		{
-			const enlarge = client.commands.get("enlarge");
-			await enlarge.executeManual(message, commandEndIndex);
-			return;
+			if(command == "enlarge")
+			{
+				const enlarge = client.commands.get("enlarge");
+				await enlarge.executeManual(message, commandEndIndex);
+				return;
+			}
+			else if(command == "reduce")
+			{
+				const reduce = client.commands.get("reduce");
+				await reduce.executeManual(message, commandEndIndex);
+				return;
+			}
+			else if(command == "polymorph")
+			{
+				const polymorph = client.commands.get("polymorph");
+				await polymorph.executeManual(message, commandEndIndex);
+				return;
+			}
 		}
-		else if(command == "reduce")
+		catch(error)
 		{
-			const reduce = client.commands.get("reduce");
-			await reduce.executeManual(message, commandEndIndex);
-			return;
-		}
-		else if(command == "polymorph")
-		{
-			const polymorph = client.commands.get("polymorph");
-			await polymorph.executeManual(message, commandEndIndex);
-			return;
+			console.error(error);
+			await message.reply({ content: "There was an error while executing this command!", ephemeral: true });
 		}
 	}
 

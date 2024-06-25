@@ -1,101 +1,22 @@
-const { SlashCommandBuilder } = require("discord.js");
-const { Collection } = require("discord.js");
-
-async function reduce(username, replier, manual = false)
-{
-	//if no username was provided, get username of the message replied to
-	if(manual && !username)
-	{
-		const repliedMsg = await replier.channel.messages.fetch(replier.reference.messageId);
-		if(repliedMsg)
-		{
-			username = repliedMsg.author.username;
-			if(username == "Mischievous Wizard") //cannot let users cast spells on Mischievous Wizard
-				username = undefined;
-		}
-		else
-			console.log("no reply message found");
-	}
-	//if no message was replied to, get username of last message sent before command
-	if(!username)
-	{
-		const numMessages = 10;
-		const messages = await replier.channel.messages.fetch({ limit: numMessages });
-		var i = 0;
-		for(m of messages)
-		{
-			if(m[1].author.username == "Mischievous Wizard")
-				continue;
-			if(i == 0 && !manual)
-			{
-				username = m[1].author.username;
-				break;
-			}
-			else if(i > 0)
-			{
-				username = m[1].author.username;
-				break;
-			}
-			i++;
-		}
-		if(!username) //couldn't find any messages besides ones from our webhook
-		{
-			await replier.reply({ content: "Couldn't find a target for Reduce.", ephemeral: true});
-			return;
-		}
-	}
-
-	//get all userEffects
-	const { userEffects } = replier.client;
-
-	//get effects for user
-	if(!userEffects.has(username))
-		userEffects.set(username, new Collection());
-	var effects = userEffects.get(username);
-
-	//remove any enlarge effect currently on user
-	effects.delete("enlarge");
-
-	//add or overwrite reduce effect on user
-	//set expireTime to -1 so we know to overwrite it whenever the user speaks next
-	effects.set("reduce", { expireTime: -1 });
-
-	await replier.reply({ content: `Successfully cast Reduce on ${username}!`, ephemeral: true});
-}
+var { generateSlashData, userEffectExecute, userEffectExecuteManual } = require("../templates/user_effect_command.js");
 
 module.exports = 
 {
+	refreshTemplate(client)
+	{ ({ generateSlashData, userEffectExecute, userEffectExecuteManual } = client.commands.get("user_effect_command")); },
 	publicCommand: true, //WILL BE DEPLOYED GLOBALLY
 	cooldown: 5,
-	data: new SlashCommandBuilder().setName("reduce").setDescription("Makes a user speak in tiny text for 1 minute.")
-	.addUserOption(option =>
-		option.setName("user")
-			.setDescription("The user to Reduce.")
-			.setRequired(false)),
+	data: generateSlashData("reduce", "Makes a user speak in tiny text for 1 minute."),
 	async execute(interaction)
 	{
-		var user = interaction.options.getUser("user");
-		reduce(user ? user.username : undefined, interaction);
+		const effects = await userEffectExecute("reduce", interaction);
+		if(effects)
+			effects.delete("enlarge");
 	},
 	async executeManual(message, commandEndIndex)
 	{
-		var user;
-		if(commandEndIndex != -1) //something typed after command
-		{
-			user = message.content.match(/(?<=<@)\d+(?=>)/); //get user id
-			if(user) //user id was found
-			{
-				user = await message.client.users.fetch(user[0]);
-				if(user) //user id was valid
-					user = user.username;
-			}
-			if(!user)
-			{
-				user = message.content.substring(commandEndIndex + 1);
-				if(!user.match(/\w/)) //username manually entered has no letters, so it's a censored message and we should ignore the request
-					return;
-			}
-		}
-		reduce(user, message, true);
+		const effects = await userEffectExecuteManual("reduce", message, commandEndIndex);
+		if(effects)
+			effects.delete("enlarge");
 	}
 };

@@ -15,21 +15,34 @@ module.exports =
 		if(!command)
 			return interaction.reply(`There is no command with name \`${commandName}\`!`);
 
+		const folder = interaction.client.templates.includes(commandName) ? "templates" : "utility";
+
 		//requiring a file will cache it, so requiring it again will load the old cached version.
 		//because of this we need to delete the version of the command file in the require cache
-		delete require.cache[require.resolve(`./${command.data.name}.js`)];
+		delete require.cache[require.resolve(`../${folder}/${commandName}.js`)];
 
 		try
 		{
 			//load updated command, overwrite old command in commands collection
-			const newCommand = require(`./${command.data.name}.js`);
-			interaction.client.commands.set(newCommand.data.name, newCommand);
-			await interaction.reply(`Command \`${newCommand.data.name}\` was reloaded!`);
+			const newCommand = require(`../${folder}/${commandName}.js`);
+			interaction.client.commands.set(commandName, newCommand);
+
+			//if command is a template, commands need to refresh their reference to it
+			if(folder == "templates")
+			{
+				for(c of interaction.client.commands)
+				{
+					if(c[1].refreshTemplate)
+						c[1].refreshTemplate(interaction.client);
+				}
+			}
+
+			await interaction.reply(`Command \`${commandName}\` was reloaded!`);
 		}
 		catch(error)
 		{
 			console.error(error);
-			await interaction.reply(`There was an error while reloading a command \`${command.data.name}\`:\n\`${error.message}\``);
+			await interaction.reply(`There was an error while reloading a command \`${commandName}\`:\n\`${error.message}\``);
 		}
 	}
 };
