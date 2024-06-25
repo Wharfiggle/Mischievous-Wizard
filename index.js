@@ -129,6 +129,8 @@ client.on('messageCreate', async (message) =>
 			return;
 	}
 
+	console.log(message.content);
+
 	//manual commands
 	const prefixMatch = message.content.toLowerCase().match(/^(i cast\.*|🪄|🧙‍♀️|🧙|🧙‍♂️)\s*/);
 	if(prefixMatch)
@@ -147,19 +149,20 @@ client.on('messageCreate', async (message) =>
 		{
 			const enlarge = client.commands.get("enlarge");
 			await enlarge.executeManual(message, commandEndIndex);
+			return;
 		}
-		if(command == "reduce")
+		else if(command == "reduce")
 		{
 			const reduce = client.commands.get("reduce");
 			await reduce.executeManual(message, commandEndIndex);
+			return;
 		}
-		if(command == "polymorph")
+		else if(command == "polymorph")
 		{
 			const polymorph = client.commands.get("polymorph");
 			await polymorph.executeManual(message, commandEndIndex);
+			return;
 		}
-
-		return;
 	}
 
 	//get userEffects from client
@@ -181,7 +184,10 @@ client.on('messageCreate', async (message) =>
 		}
 	}
 	if(!effects)
+	{
+		console.log("no effects");
 		return;
+	}
 
 	//delete effects from collection if they've expired
 	const now = Date.now();
@@ -199,6 +205,7 @@ client.on('messageCreate', async (message) =>
 	//no non-expired effects remaining
 	if(effects.size == 0)
 	{
+		console.log("no non expired effects");
 		userEffects.delete(message.author.username);
 		return;
 	}
@@ -263,9 +270,12 @@ client.on('messageCreate', async (message) =>
 		outputMessage = "**" + outputMessage.toUpperCase() + "**";
 	if(effects.has("reduce"))
 	{
-		var smallText = superscript(outputMessage);
+		console.log("attempt to reduce");
+		var smallText = superscript(outputMessage.toLowerCase());
 		if(smallText != "")
 			outputMessage = smallText;
+		else
+			console.log("reduce would've made an empty string");
 	}
 
 	//get appropriate webhook and send message with it
