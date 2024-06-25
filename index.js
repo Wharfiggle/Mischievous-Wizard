@@ -120,8 +120,46 @@ async function turnTextToBlabber(text, blabWord)
 const webhooks = new Collection();
 client.on('messageCreate', async (message) =>
 {
-	if(message.webhookId) //message is from a bot
+	//manual commands
+	const prefixMatch = message.content.toLowerCase().match(/^(i cast\.*|🪄|🧙‍♀️|🧙|🧙‍♂️)\s*/);
+	if(prefixMatch)
+	{
+		const prefix = prefixMatch[0];
+		var commandEndIndex = message.content.indexOf(" ", prefix.length); //index of first space in string after prefix
+		const command = message.content.substring(prefix.length, (commandEndIndex == -1) ? undefined : commandEndIndex).toLowerCase();
+		//allow for user to say "on" after the command
+		if(commandEndIndex != -1)
+		{
+			if(message.content.substring(commandEndIndex + 1, commandEndIndex + 4).toLowerCase() == "on ")
+				commandEndIndex += 3;
+		}
+
+		if(command == "enlarge")
+		{
+			const enlarge = client.commands.get("enlarge");
+			await enlarge.executeManual(message, commandEndIndex);
+		}
+		if(command == "reduce")
+		{
+			const reduce = client.commands.get("reduce");
+			await reduce.executeManual(message, commandEndIndex);
+		}
+		if(command == "polymorph")
+		{
+			const polymorph = client.commands.get("polymorph");
+			await polymorph.executeManual(message, commandEndIndex);
+		}
+
 		return;
+	}
+
+	var isWebhook = false;
+	if(message.webhookId) //is a webhook
+	{
+		isWebhook = true;
+		if(webhooks.length > 0 && webhooks[0].id == message.webhookId) //webhook is ours
+			return;
+	}
 
 	//get userEffects from client
 	const { userEffects } = client;
@@ -151,7 +189,7 @@ client.on('messageCreate', async (message) =>
 	}
 
 	//default message variables
-	var outputName = message.member.nickname;
+	var outputName = isWebhook ? message.author.username : message.member.nickname;
 	var outputMessage = message.content;
 	var outputAvatar = message.author.displayAvatarURL();
 
