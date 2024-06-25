@@ -3,7 +3,20 @@ const { Collection } = require("discord.js");
 
 async function enlarge(username, replier, manual = false)
 {
-	//if no username was provided, get username of last message sent before command
+	//if no username was provided, get username of the message replied to
+	if(manual && !username)
+	{
+		const repliedMsg = await replier.channel.messages.fetch(replier.reference.messageId);
+		if(repliedMsg)
+		{
+			username = repliedMsg.author.username;
+			if(username == "Mischievous Wizard") //cannot let users cast spells on Mischievous Wizard
+				username = undefined;
+		}
+		else
+			console.log("no reply message found");
+	}
+	//if no message was replied to, get username of last message sent before command
 	if(!username)
 	{
 		const numMessages = 10;
