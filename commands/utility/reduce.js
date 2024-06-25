@@ -67,7 +67,7 @@ module.exports =
 	async executeManual(message, commandEndIndex)
 	{
 		var user;
-		if(commandEndIndex) //something typed after command
+		if(commandEndIndex != -1) //something typed after command
 		{
 			user = message.content.match(/(?<=<@)\d+(?=>)/); //get user id
 			if(user) //user id was found
@@ -76,7 +76,7 @@ module.exports =
 				if(user) //user id was valid
 					user = user.username;
 			}
-			else
+			if(!user)
 			{
 				user = message.content.substring(commandEndIndex + 1);
 				if(!user.match(/\w/)) //username manually entered has no letters, so it's a censored message and we should ignore the request

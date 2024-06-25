@@ -165,18 +165,23 @@ client.on('messageCreate', async (message) =>
 	//get userEffects from client
 	const { userEffects } = client;
 
-	var effects = userEffects.get(message.author.username); //passed as reference so changes update for client.userEffects
+	var origEffects = userEffects.get(message.author.username); //passed as reference so changes update for client.userEffects
+	var effects = origEffects;
 	//get effects under nickname as well
+	var nickEffects;
 	if(!isWebhook)
 	{
-		var nickEffects = userEffects.get(message.member.nickname);
-		if(!nickEffects && !effects) //no effects found for this user
-			return;
-		else if(nickEffects && effects)
-			effects.concat(nickEffects);
-		else if(nickEffects)
-			effects = nickEffects;
+		nickEffects = userEffects.get(message.member.nickname);
+		if(nickEffects)
+		{
+			if(origEffects)
+				effects = origEffects.concat(nickEffects);
+			else
+				effects = nickEffects;
+		}
 	}
+	if(!effects)
+		return;
 
 	//delete effects from collection if they've expired
 	const now = Date.now();
@@ -240,10 +245,28 @@ client.on('messageCreate', async (message) =>
 
 		outputMessage = await turnTextToBlabber(outputMessage, blabWord);
 	}
+	//if both enlarge and 
+	if(effects.has("enlarge") && effects.has("reduce")) //one showed up in origEffects and one showed up in nickEFfects, need to remove whichever's earlier
+	{
+		var enlarge = effects.get("enlarge");
+		var reduce = effects.get("reduce");
+		var toDelete;
+		if(enlarge.expireTime == -1 || enlarge.expireTime > reduce.expireTime)
+			toDelete = "reduce";
+		else
+			toDelete = "enlarge";
+		origEffects.delete(toDelete);
+		nickEffects.delete(toDelete);
+		effects.delete(toDelete);
+	}
 	if(effects.has("enlarge"))
 		outputMessage = "**" + outputMessage.toUpperCase() + "**";
 	if(effects.has("reduce"))
-		outputMessage = superscript(outputMessage);
+	{
+		var smallText = superscript(outputMessage);
+		if(smallText != "")
+			outputMessage = smallText;
+	}
 
 	//get appropriate webhook and send message with it
 	try
