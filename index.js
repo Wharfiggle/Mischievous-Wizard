@@ -129,8 +129,6 @@ client.on('messageCreate', async (message) =>
 			return;
 	}
 
-	console.log(message.content);
-
 	//manual commands
 	const prefixMatch = message.content.toLowerCase().match(/^(i cast\.*|🪄|🧙‍♀️|🧙|🧙‍♂️)\s*/);
 	if(prefixMatch)
@@ -178,16 +176,13 @@ client.on('messageCreate', async (message) =>
 		if(nickEffects)
 		{
 			if(origEffects)
-				effects = origEffects.concat(nickEffects);
+				effects = origEffects.concat(nickEffects); //combine into one collection
 			else
 				effects = nickEffects;
 		}
 	}
-	if(!effects)
-	{
-		console.log("no effects");
+	if(!effects) //no effects on user
 		return;
-	}
 
 	//delete effects from collection if they've expired
 	const now = Date.now();
@@ -205,8 +200,9 @@ client.on('messageCreate', async (message) =>
 	//no non-expired effects remaining
 	if(effects.size == 0)
 	{
-		console.log("no non expired effects");
 		userEffects.delete(message.author.username);
+		if(!isWebhook)
+			userEffects.delete(message.member.nickname);
 		return;
 	}
 
@@ -270,12 +266,11 @@ client.on('messageCreate', async (message) =>
 		outputMessage = "**" + outputMessage.toUpperCase() + "**";
 	if(effects.has("reduce"))
 	{
-		console.log("attempt to reduce");
 		var smallText = superscript(outputMessage.toLowerCase());
 		if(smallText != "")
 			outputMessage = smallText;
 		else
-			console.log("reduce would've made an empty string");
+			console.log("reduce would've made an empty string: " + outputMessage);
 	}
 
 	//get appropriate webhook and send message with it
