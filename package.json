@@ -12,7 +12,8 @@
   "dependencies": {
     "@types/node": "^18.0.6",
     "discord.js": "^14.15.2",
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "superscript-text": "^1.0.0"
   },
   "devDependencies": {
     "node": "^16.20.2"
