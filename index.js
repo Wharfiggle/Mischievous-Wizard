@@ -120,6 +120,15 @@ async function turnTextToBlabber(text, blabWord)
 const webhooks = new Collection();
 client.on('messageCreate', async (message) =>
 {
+	var isWebhook = false;
+	if(message.webhookId) //is a webhook
+	{
+		isWebhook = true;
+		const firstWebhook = webhooks.first();
+		if(firstWebhook && firstWebhook.id == message.webhookId) //webhook is ours
+			return;
+	}
+
 	//manual commands
 	const prefixMatch = message.content.toLowerCase().match(/^(i cast\.*|🪄|🧙‍♀️|🧙|🧙‍♂️)\s*/);
 	if(prefixMatch)
@@ -153,20 +162,21 @@ client.on('messageCreate', async (message) =>
 		return;
 	}
 
-	var isWebhook = false;
-	if(message.webhookId) //is a webhook
-	{
-		isWebhook = true;
-		if(webhooks.length > 0 && webhooks[0].id == message.webhookId) //webhook is ours
-			return;
-	}
-
 	//get userEffects from client
 	const { userEffects } = client;
 
-	const effects = userEffects.get(message.author.username); //passed as reference so changes update for client.userEffects
-	if(!effects) //user that made the message has no effects
-		return;
+	var effects = userEffects.get(message.author.username); //passed as reference so changes update for client.userEffects
+	//get effects under nickname as well
+	if(!isWebhook)
+	{
+		var nickEffects = userEffects.get(message.member.nickname);
+		if(!nickEffects && !effects) //no effects found for this user
+			return;
+		else if(nickEffects && effects)
+			effects.concat(nickEffects);
+		else if(nickEffects)
+			effects = nickEffects;
+	}
 
 	//delete effects from collection if they've expired
 	const now = Date.now();
@@ -263,6 +273,8 @@ client.on('messageCreate', async (message) =>
 			}
 
 			webhooks.set(webhook.channel, webhook);
+			if(webhook.id == message.webhookId)
+				return;
 		}
 
 		await webhook.send(
