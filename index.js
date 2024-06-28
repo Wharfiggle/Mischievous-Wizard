@@ -74,8 +74,7 @@ client.on('messageCreate', async (message) =>
 	if(message.webhookId) //is a webhook
 	{
 		isWebhook = true;
-		const firstWebhook = webhooks.first();
-		if(firstWebhook && firstWebhook.id == message.webhookId) //webhook is ours
+		if(webhooks.find(wh => wh.id == message.webhookId)) //webhook is ours
 			return;
 	}
 
@@ -218,7 +217,7 @@ client.on('messageCreate', async (message) =>
 		{
 			//find our webhook in the server
 			const foundWebhooks = await message.channel.fetchWebhooks();
-			webhook = foundWebhooks.find(wh => wh.token);
+			webhook = foundWebhooks.find(wh => wh.token == token);
 
 			if(!webhook) //have not created a webhook in this channel so need to create one
 			{
