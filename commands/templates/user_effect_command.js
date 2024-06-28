@@ -72,12 +72,12 @@ module.exports =
 			    .setDescription(`The user to ${effect}.`)
 			    .setRequired(false))
     },
-	async userEffectExecute(effect, interaction)
+	async execute(effect, interaction)
 	{
 		var user = interaction.options.getUser("user");
 		return await applyEffect(effect, user ? user.username : undefined, interaction);
 	},
-	async userEffectExecuteManual(effect, message, commandEndIndex)
+	async executeManual(effect, message, commandEndIndex)
 	{
 		var user;
 		if(commandEndIndex != -1) //something typed after command

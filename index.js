@@ -65,64 +65,7 @@ for(const file of eventFiles)
 
 //		custom code for mischievous wizard
 
-const superscript = require("superscript-text");
-
 client.userEffects = new Collection(); //effects on each user stored in this
-
-
-//function for polymorph, takes message content for text and a word like "bah" for the blabword
-//returns a string with the same number of words and similar capitalization as text but only using blabWord 
-async function turnTextToBlabber(text, blabWord)
-{
-	var string = "";
-	const words = text.split(" ");
-	for(var w = 0; w < words.length; w++)
-	{
-		const word = words[w];
-		var some = false; //some capitalization in word
-		var first = false; //first character capitalized
-		var all = true; //word is all caps
-
-		//determine some, first, and all values based on all characters in word
-		for(var i = 0; i < word.length; i++)
-		{
-			const char = word[i];
-			const charUpper = char.toUpperCase();
-			if(charUpper < 'A' || charUpper > 'Z') //not a letter
-				continue;
-			if(char == charUpper)
-			{
-				if(i == 0)
-					first = true;
-				else
-					some = true;
-			}
-			else
-				all = false;
-		}
-
-		//add characters from blabWord with varying capitalization based on some, first, and all
-		for(var i = 0; i < blabWord.length; i++)
-		{
-			const char = blabWord[i];
-			if(all)
-				string += char.toUpperCase();
-			else if(i == 0 && first)
-				string += char.toUpperCase();
-			else if(some)
-				string += (string.length % 2 == 0) ? char.toUpperCase() : char
-			else
-				string += char;
-		}
-
-		//add space if not the last word
-		if(w < words.length - 1)
-			string += " ";
-	}
-
-	return string;
-}
-
 
 const webhooks = new Collection();
 client.on('messageCreate', async (message) =>
@@ -175,6 +118,7 @@ client.on('messageCreate', async (message) =>
 		{
 			console.error(error);
 			await message.reply({ content: "There was an error while executing this command!", ephemeral: true });
+			return;
 		}
 	}
 
@@ -209,7 +153,12 @@ client.on('messageCreate', async (message) =>
 			userEffects.set(e[0], e[1]); //apply change to userEffects
 		}
 		else if(e[1].expireTime < now) //expiration time for effect has passed
+		{
+			//delete from original collections as well since changes to effects do not update for client.userEffects
+			if(origEffects) origEffects.delete(e[0]);
+			if(nickEffects) nickEffects.delete(e[0]);
 			effects.delete(e[0]);
+		}
 	}
 
 	//no non-expired effects remaining
@@ -222,49 +171,15 @@ client.on('messageCreate', async (message) =>
 	}
 
 	//default message variables
-	var outputName = isWebhook ? message.author.username : message.member.nickname;
-	var outputMessage = message.content;
-	var outputAvatar = message.author.displayAvatarURL();
-
-	if(effects.has("polymorph"))
+	var msgInfo =
 	{
-		const polymorph = effects.get("polymorph");
-		var blabWord;
-		if(polymorph.animal == "cow")
-		{
-			blabWord = "moo";
-			outputAvatar = "https://avatarfiles.alphacoders.com/259/259549.jpg";
-		}
-		else if(polymorph.animal == "chicken")
-		{
-			blabWord = "bok";
-			outputAvatar = "https://avatarfiles.alphacoders.com/319/thumb-1920-319062.jpg";
-		}
-		else if(polymorph.animal == "cat")
-		{
-			blabWord = "meow";
-			outputAvatar = "https://avatarfiles.alphacoders.com/259/thumb-1920-259025.jpg";
-		}
-		else if(polymorph.animal == "dog")
-		{
-			blabWord = "bark";
-			outputAvatar = "https://avatarfiles.alphacoders.com/259/thumb-1920-259031.jpg";
-		}
-		else if(polymorph.animal == "horse")
-		{	
-			blabWord = "neigh";
-			outputAvatar = "https://avatarfiles.alphacoders.com/445/thumb-1920-44563.jpg";
-		}
-		else if(polymorph.animal == "sheep")
-		{
-			blabWord = "bah";
-			outputAvatar = "https://avatarfiles.alphacoders.com/308/thumb-1920-308683.jpg";
-		}
-
-		outputMessage = await turnTextToBlabber(outputMessage, blabWord);
+		outputName : isWebhook || !message.member.nickname ? message.author.username : message.member.nickname,
+		outputMessage : message.content,
+		outputAvatar : message.author.displayAvatarURL()
 	}
-	//if both enlarge and 
-	if(effects.has("enlarge") && effects.has("reduce")) //one showed up in origEffects and one showed up in nickEFfects, need to remove whichever's earlier
+
+	//rare case where one showed up in origEffects and one showed up in nickEffects, need to remove whichever's earlier
+	if(effects.has("enlarge") && effects.has("reduce"))
 	{
 		var enlarge = effects.get("enlarge");
 		var reduce = effects.get("reduce");
@@ -273,19 +188,20 @@ client.on('messageCreate', async (message) =>
 			toDelete = "reduce";
 		else
 			toDelete = "enlarge";
-		origEffects.delete(toDelete);
-		nickEffects.delete(toDelete);
+		if(origEffects) origEffects.delete(toDelete);
+		if(nickEffects) nickEffects.delete(toDelete);
 		effects.delete(toDelete);
 	}
-	if(effects.has("enlarge"))
-		outputMessage = "**" + outputMessage.toUpperCase() + "**";
-	if(effects.has("reduce"))
+
+	//sort effects based on order of effect names in effectPriority
+	//need effects to be applied in a certain order for best results
+	const effectPriority = ["polymorph", "enlarge", "reduce"];
+	effects = [...effects.entries()].sort( (a, b) => effectPriority.indexOf(a[0]) < effectPriority.indexOf(b[0]) );
+
+	//apply each effect to msgInfo variables
+	for(e of effects)
 	{
-		var smallText = superscript(outputMessage.toLowerCase());
-		if(smallText != "")
-			outputMessage = smallText;
-		else
-			console.log("reduce would've made an empty string: " + outputMessage);
+		msgInfo = client.commands.get(e[0]).transformMessage(msgInfo, e[1]);
 	}
 
 	//get appropriate webhook and send message with it
@@ -302,7 +218,7 @@ client.on('messageCreate', async (message) =>
 
 			if(!webhook) //have not created a webhook in this channel so need to create one
 			{
-				await message.channel.createWebhook({ name: 'WebhookCensorer' })
+				await message.channel.createWebhook({ name: 'Mischievous Wizard' })
 				.then(createdWebhook => 
 				{
 					webhook = createdWebhook;
@@ -322,9 +238,9 @@ client.on('messageCreate', async (message) =>
 
 		await webhook.send(
 		{
-			content: outputMessage,
-			username: outputName,
-			avatarURL: outputAvatar
+			content: msgInfo.outputMessage,
+			username: msgInfo.outputName,
+			avatarURL: msgInfo.outputAvatar
 		});
 
 		message.delete();
