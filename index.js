@@ -198,11 +198,15 @@ client.on('messageCreate', async (message) =>
 	const effectPriority = ["polymorph", "enlarge", "reduce"];
 	effects = [...effects.entries()].sort( (a, b) => effectPriority.indexOf(a[0]) < effectPriority.indexOf(b[0]) );
 
-	//apply each effect to msgInfo variables
-	for(e of effects)
+	try
 	{
-		msgInfo = client.commands.get(e[0]).transformMessage(msgInfo, e[1]);
+		//apply each effect to msgInfo variables
+		for(e of effects)
+		{
+			msgInfo = client.commands.get(e[0]).transformMessage(msgInfo, e[1]);
+		}
 	}
+	catch(error) { console.error("Error trying to transform message: ", error); }
 
 	//get appropriate webhook and send message with it
 	try
@@ -245,7 +249,7 @@ client.on('messageCreate', async (message) =>
 
 		message.delete();
 	}
-	catch(error) { console.error('Error trying to send a message: ', error); }
+	catch(error) { console.error("Error trying to send a message: ", error); }
 });
 
 

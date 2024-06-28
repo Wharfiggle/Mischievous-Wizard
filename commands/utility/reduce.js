@@ -22,7 +22,36 @@ module.exports =
 	},
 	transformMessage(msgInfo, effectInfo)
 	{
-		msgInfo.outputMessage = superscript(msgInfo.outputMessage.toLowerCase());
+		//find and exclude custom emojis from being changed to superscript
+		const exclude = [...msgInfo.outputMessage.matchAll(/<:\w+:\d+>/g)];
+		var charsRemoved = 0;
+		//remove custom emojis from string
+		for(e of exclude)
+		{
+			const ind = e.index - charsRemoved; //account for chars before this that were removed from the string
+			msgInfo.outputMessage = msgInfo.outputMessage.substring(0, ind) + msgInfo.outputMessage.substring(ind + e[0].length);
+			charsRemoved += e[0].length;
+		}
+
+		//change letters and numbers to superscript
+		var str = "";
+		for(c of msgInfo.outputMessage)
+		{
+			var charLower = c.toLowerCase();
+			if((charLower >= 'a' && charLower <= 'z') || (charLower >= '0' && charLower <= '9'))
+				str += superscript(c);
+			else
+				str += charLower;
+		}
+		msgInfo.outputMessage = str;
+		
+		//add custom emojis back in
+		for(e of exclude)
+		{
+			const ind = e.index;
+			msgInfo.outputMessage = msgInfo.outputMessage.substring(0, ind) + e[0] + msgInfo.outputMessage.substring(ind);
+		}
+
 		return msgInfo;
 	}
 };
