@@ -10,8 +10,8 @@ async function applyEffect(effect, username, replier, manual = false)
 		if(repliedMsg)
 		{
 			username = repliedMsg.author.username;
-			if(username == "Mischievous Wizard") //cannot let users cast spells on Mischievous Wizard
-				username = undefined;
+			if(username == "Mischievous Wizard") //cant let users target the wizard, will cause an infinite loop
+				username = replier.author.username;
 		}
 		else
 			console.log("no reply message found");
@@ -59,11 +59,42 @@ async function applyEffect(effect, username, replier, manual = false)
 
 	await replier.reply({ content: `Successfully cast ${effect} on ${username}!`, ephemeral: true});
 
-    return effects;
+    return [username, effects];
 }
 
 module.exports = 
 {
+	async removeEffect(effect, replier, effects)
+	{
+		console.log(replier.content);
+		console.log(effects);
+
+		effects[1].delete(effect); //delete reduce from currents username or nickname's effects
+
+		//find our member assuming we're using a username
+		const members = await replier.guild.members.list();
+		var member = await members.find(m => m.user.username == effects[0]);
+		if(!member) //not a username
+		{
+			member = await members.find(m => m.nickname == effects[0]);
+			if(!member) //not a nickname either, user is either not valid or isnt a member (likely a webhook)
+				return;
+			else
+			{
+				//get effects under member username and remove effect
+				const pairEffects = replier.client.userEffects.get(member.user.username);
+				if(pairEffects)
+					pairEffects.delete(effect);
+			}
+		}
+		else
+		{
+			//get effects under member nickname and remove effect
+			const pairEffects = replier.client.userEffects.get(member.nickname);
+			if(pairEffects)
+				pairEffects.delete(effect);
+		}
+	},
 	generateSlashData(effect, description)
     {
         return new SlashCommandBuilder().setName(effect).setDescription(description)
@@ -89,11 +120,13 @@ module.exports =
 				if(user) //user id was valid
 					user = user.username;
 			}
-			if(!user)
+			if(!user) //no user mentioned so no id, use text typed after command as username
 			{
 				user = message.content.substring(commandEndIndex + 1);
 				if(!user.match(/\w/)) //username manually entered has no letters, so it's a censored message and we should ignore the request
 					return;
+				else if(user.toLowerCase() == "me" || user.toLowerCase() == "myself" || user == "Mischievous Wizard") //cant let users target the wizard
+					user = message.author.username;
 			}
 		}
 		return await applyEffect(effect, user, message, true);

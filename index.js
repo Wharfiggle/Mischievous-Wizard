@@ -84,8 +84,11 @@ client.on('messageCreate', async (message) =>
 	{
 		const prefix = prefixMatch[0];
 		var commandEndIndex = message.content.indexOf(" ", prefix.length); //index of first space in string after prefix
-		const command = message.content.substring(prefix.length, (commandEndIndex == -1) ? undefined : commandEndIndex).toLowerCase();
-		//allow for user to say "on" after the command
+		var command = message.content.substring(prefix.length, (commandEndIndex == -1) ? undefined : commandEndIndex).toLowerCase();
+		const punctuation = command.match(/(\.|!|\?)+$/); //get punctuation marks after command
+		if(punctuation)
+			command = command.substring(0, punctuation.index); //cut off punctuation
+		//allow for user to say "on" after the command: "cast reduce on peter"
 		if(commandEndIndex != -1)
 		{
 			if(message.content.substring(commandEndIndex + 1, commandEndIndex + 4).toLowerCase() == "on ")
@@ -94,24 +97,10 @@ client.on('messageCreate', async (message) =>
 
 		try
 		{
-			if(command == "enlarge")
-			{
-				const enlarge = client.commands.get("enlarge");
-				await enlarge.executeManual(message, commandEndIndex);
-				return;
-			}
-			else if(command == "reduce")
-			{
-				const reduce = client.commands.get("reduce");
-				await reduce.executeManual(message, commandEndIndex);
-				return;
-			}
-			else if(command == "polymorph")
-			{
-				const polymorph = client.commands.get("polymorph");
-				await polymorph.executeManual(message, commandEndIndex);
-				return;
-			}
+			const commandGet = client.commands.get(command);
+			if(commandGet)
+				await commandGet.executeManual(message, commandEndIndex);
+			return;
 		}
 		catch(error)
 		{
@@ -124,19 +113,26 @@ client.on('messageCreate', async (message) =>
 	//get userEffects from client
 	const { userEffects } = client;
 
-	var origEffects = userEffects.get(message.author.username); //passed as reference so changes update for client.userEffects
+	const username = message.author.username;
+	var nickname = "";
+
+	var origEffects = userEffects.get(username); //passed as reference so changes update for client.userEffects
 	var effects = origEffects;
 	//get effects under nickname as well
 	var nickEffects;
 	if(!isWebhook)
 	{
-		nickEffects = userEffects.get(message.member.nickname);
-		if(nickEffects)
+		nickname = message.member.nickname;
+		if(nickname)
 		{
-			if(origEffects)
-				effects = origEffects.concat(nickEffects); //combine into one collection
-			else
-				effects = nickEffects;
+			nickEffects = userEffects.get(nickname);
+			if(nickEffects)
+			{
+				if(origEffects)
+					effects = origEffects.concat(nickEffects); //combine into one collection
+				else
+					effects = nickEffects;
+			}
 		}
 	}
 	if(!effects) //no effects on user
@@ -163,33 +159,18 @@ client.on('messageCreate', async (message) =>
 	//no non-expired effects remaining
 	if(effects.size == 0)
 	{
-		userEffects.delete(message.author.username);
+		userEffects.delete(username);
 		if(!isWebhook)
-			userEffects.delete(message.member.nickname);
+			userEffects.delete(nickname);
 		return;
 	}
 
 	//default message variables
 	var msgInfo =
 	{
-		outputName : isWebhook || !message.member.nickname ? message.author.username : message.member.nickname,
+		outputName : nickname ? nickname : username,
 		outputMessage : message.content,
 		outputAvatar : message.author.displayAvatarURL()
-	}
-
-	//rare case where one showed up in origEffects and one showed up in nickEffects, need to remove whichever's earlier
-	if(effects.has("enlarge") && effects.has("reduce"))
-	{
-		var enlarge = effects.get("enlarge");
-		var reduce = effects.get("reduce");
-		var toDelete;
-		if(enlarge.expireTime == -1 || enlarge.expireTime > reduce.expireTime)
-			toDelete = "reduce";
-		else
-			toDelete = "enlarge";
-		if(origEffects) origEffects.delete(toDelete);
-		if(nickEffects) nickEffects.delete(toDelete);
-		effects.delete(toDelete);
 	}
 
 	//sort effects based on order of effect names in effectPriority
@@ -217,7 +198,7 @@ client.on('messageCreate', async (message) =>
 		{
 			//find our webhook in the server
 			const foundWebhooks = await message.channel.fetchWebhooks();
-			webhook = foundWebhooks.find(wh => wh.token == token);
+			webhook = foundWebhooks.find(wh => wh.token);
 
 			if(!webhook) //have not created a webhook in this channel so need to create one
 			{

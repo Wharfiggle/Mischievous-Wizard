@@ -72,13 +72,13 @@ module.exports =
 	{
 		const effects = await execute("polymorph", interaction);
 		if(effects)
-			effects.get("polymorph").animal = getRandomAnimal();
+			effects[1].get("polymorph").animal = getRandomAnimal();
 	},
 	async executeManual(message, commandEndIndex)
 	{
 		const effects = await executeManual("polymorph", message, commandEndIndex);
 		if(effects)
-			effects.get("polymorph").animal = getRandomAnimal();
+			effects[1].get("polymorph").animal = getRandomAnimal();
 	},
 	transformMessage(msgInfo, effectInfo)
 	{
