@@ -1,4 +1,4 @@
-var { generateSlashData, execute, executeManual } = require("../templates/user_effect_command.js");
+var { applyEffect, removeEffect, generateSlashData, execute, executeManual } = require("../templates/user_effect_command.js");
 
 //returns a string with the same number of words and similar capitalization as text but only using blabWord 
 function turnTextToBlabber(text, blabWord)
@@ -64,21 +64,29 @@ function getRandomAnimal()
 module.exports = 
 {
 	refreshTemplate(client)
-	{ ({ generateSlashData, execute, executeManual } = client.commands.get("user_effect_command")); },
+	{ ({ applyEffect, removeEffect, generateSlashData, execute, executeManual } = client.commands.get("user_effect_command")); },
 	publicCommand: true, //WILL BE DEPLOYED GLOBALLY
 	cooldown: 5,
 	data: generateSlashData("polymorph", "Turns a user into a random animal for 1 minute."),
 	async execute(interaction)
 	{
-		const effects = await execute("polymorph", interaction);
-		if(effects)
-			effects[1].get("polymorph").animal = getRandomAnimal();
+		const target = await execute(interaction);
+		if(target)
+		{
+			const effects = await applyEffect("polymorph", target, interaction);
+			await removeEffect("disguiseself", target, interaction);
+			effects.get("polymorph").animal = getRandomAnimal();
+		}
 	},
 	async executeManual(message, commandEndIndex)
 	{
-		const effects = await executeManual("polymorph", message, commandEndIndex);
-		if(effects)
-			effects[1].get("polymorph").animal = getRandomAnimal();
+		const target = await executeManual(message, commandEndIndex);
+		if(target)
+		{
+			const effects = await applyEffect("polymorph", target, message);
+			await removeEffect("disguiseself", target, message);
+			effects.get("polymorph").animal = getRandomAnimal();
+		}
 	},
 	transformMessage(msgInfo, effectInfo)
 	{

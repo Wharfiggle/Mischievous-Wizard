@@ -66,6 +66,7 @@ for(const file of eventFiles)
 //		custom code for mischievous wizard
 
 client.userEffects = new Collection(); //effects on each user stored in this
+client.webhookAvatars = new Collection(); //cache of avatars that belong to webhooks
 
 const webhooks = new Collection();
 client.on('messageCreate', async (message) =>
@@ -73,6 +74,8 @@ client.on('messageCreate', async (message) =>
 	var isWebhook = false;
 	if(message.webhookId) //is a webhook
 	{
+		if(!client.webhookAvatars.has(message.author.username))
+			client.webhookAvatars.set(message.author.username, "https://cdn.discordapp.com/avatars/" + message.author.id + "/" + message.author.avatar + ".jpeg");
 		isWebhook = true;
 		if(webhooks.find(wh => wh.id == message.webhookId)) //webhook is ours
 			return;
@@ -85,14 +88,24 @@ client.on('messageCreate', async (message) =>
 		const prefix = prefixMatch[0];
 		var commandEndIndex = message.content.indexOf(" ", prefix.length); //index of first space in string after prefix
 		var command = message.content.substring(prefix.length, (commandEndIndex == -1) ? undefined : commandEndIndex).toLowerCase();
+		//compensate for multi-word commands
+		if(commandEndIndex != -1 && command == "disguise")
+		{
+			const afterCommand = message.content.substring(commandEndIndex + 1);
+			var secondSpaceIndex = afterCommand.indexOf(" ");
+			command += afterCommand.substring(0, (secondSpaceIndex == -1) ? undefined : secondSpaceIndex).toLowerCase();
+			commandEndIndex = (secondSpaceIndex == -1) ? -1 : commandEndIndex + secondSpaceIndex;
+		}
 		const punctuation = command.match(/(\.|!|\?)+$/); //get punctuation marks after command
 		if(punctuation)
 			command = command.substring(0, punctuation.index); //cut off punctuation
-		//allow for user to say "on" after the command: "cast reduce on peter"
+		//allow for user to say "on" or "targetting" after the command: "i cast reduce on peter", "i cast enlarge targetting brian"
 		if(commandEndIndex != -1)
 		{
 			if(message.content.substring(commandEndIndex + 1, commandEndIndex + 4).toLowerCase() == "on ")
 				commandEndIndex += 3;
+			if(message.content.substring(commandEndIndex + 1, commandEndIndex + 12).toLowerCase() == "targetting ")
+				commandEndIndex += 11;
 		}
 
 		try

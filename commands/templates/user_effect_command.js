@@ -1,7 +1,7 @@
 const { SlashCommandBuilder } = require("discord.js");
 const { Collection } = require("discord.js");
 
-async function applyEffect(effect, username, replier, manual = false)
+async function findTarget(username, replier, manual = false)
 {
 	//if no username was provided, get username of the message replied to
 	if(!username && replier.reference)
@@ -13,25 +13,18 @@ async function applyEffect(effect, username, replier, manual = false)
 			if(username == "Mischievous Wizard") //cant let users target the wizard, will cause an infinite loop
 				username = replier.author.username;
 		}
-		else
-			console.log("no reply message found");
 	}
 	//if no message was replied to, get username of last message sent before command
 	if(!username)
 	{
-		const numMessages = 10;
+		const numMessages = 20;
 		const messages = await replier.channel.messages.fetch({ limit: numMessages });
 		var i = 0;
 		for(m of messages)
 		{
 			if(m[1].author.username == "Mischievous Wizard")
 				continue;
-			if(i == 0 && !manual)
-			{
-				username = m[1].author.username;
-				break;
-			}
-			else if(i > 0)
+			if((i == 0 && !manual) || i > 0)
 			{
 				username = m[1].author.username;
 				break;
@@ -40,75 +33,94 @@ async function applyEffect(effect, username, replier, manual = false)
 		}
 		if(!username) //couldn't find any messages besides ones from our webhook
 		{
-			await replier.reply({ content: `Couldn't find a target for ${effect}.`, ephemeral: true});
+			await replier.reply({ content: `Couldn't find a valid target.`, ephemeral: true});
 			return;
 		}
 	}
 
-	//get all userEffects
-	const userEffects = replier.client.userEffects;
-
-	//get effects for user
-	if(!userEffects.has(username))
-		userEffects.set(username, new Collection());
-	var effects = userEffects.get(username);
-
-	//add or overwrite effect on user
-	//set expireTime to -1 so we know to overwrite it whenever the user speaks next
-	effects.set(effect, { expireTime: -1 });
-
-	await replier.reply({ content: `Successfully cast ${effect} on ${username}!`, ephemeral: true});
-
-    return [username, effects];
+	return username;
 }
 
 module.exports = 
 {
-	async removeEffect(effect, replier, effects)
+	async applyEffect(effect, username, replier)
 	{
-		console.log(replier.content);
-		console.log(effects);
+		//get all userEffects
+		const userEffects = replier.client.userEffects;
 
-		effects[1].delete(effect); //delete reduce from currents username or nickname's effects
+		//get effects for user
+		if(!userEffects.has(username))
+			userEffects.set(username, new Collection());
+		var effects = userEffects.get(username);
 
-		//find our member assuming we're using a username
+		//add or overwrite effect on user
+		//set expireTime to -1 so we know to overwrite it whenever the user speaks next
+		effects.set(effect, { expireTime: -1 });
+
+		await replier.reply({ content: `Successfully cast ${effect} on ${username}!`, ephemeral: true});
+
+		return effects;
+	},
+	async getMember(username, replier)
+	{
 		const members = await replier.guild.members.list();
-		var member = await members.find(m => m.user.username == effects[0]);
-		if(!member) //not a username
+		var member = await members.find(m => m.user.username == username); //assume member username
+		if(!member) //not a member username
 		{
-			member = await members.find(m => m.nickname == effects[0]);
-			if(!member) //not a nickname either, user is either not valid or isnt a member (likely a webhook)
-				return;
-			else
+			member = await members.find(m => m.nickname == username); //assume member nickname
+			if(!member) //not a member nickname either, must be a webhook
 			{
-				//get effects under member username and remove effect
-				const pairEffects = replier.client.userEffects.get(member.user.username);
-				if(pairEffects)
-					pairEffects.delete(effect);
+				var avatar = replier.client.webhookAvatars.get(username);
+				if(!avatar) //avatar isnt cached
+				{
+					console.log("had to fetch webhook avatar from message history");
+					const numMessages = 50;
+					const messages = await replier.channel.messages.fetch({ limit: numMessages });
+					for(m of messages)
+					{
+						if(m[1].webhookId && m[1].author.username == username && m[1].author.avatar)
+						{
+							avatar = "https://cdn.discordapp.com/avatars/" + m[1].author.id + "/" + m[1].author.avatar + ".jpeg";
+							console.log(avatar);
+							replier.client.webhookAvatars.set(username, avatar);
+							break;
+						}
+					}
+				}
+
+				return { nickname: username, webhookAvatar: avatar, user:{ username: username } };
 			}
 		}
-		else
-		{
-			//get effects under member nickname and remove effect
-			const pairEffects = replier.client.userEffects.get(member.nickname);
-			if(pairEffects)
-				pairEffects.delete(effect);
-		}
+		
+		return member;
 	},
-	generateSlashData(effect, description)
+	async removeEffect(effect, username, replier)
+	{
+		const member = await module.exports.getMember(username, replier);
+
+		const usernameEffects = replier.client.userEffects.get(member.user.username);
+		if(usernameEffects)
+			usernameEffects.delete(effect);
+		const nicknameEffects = replier.client.userEffects.get(member.nickname);
+		if(nicknameEffects)
+			nicknameEffects.delete(effect);
+
+		return member;
+	},
+	generateSlashData(effect, description, argDescription = undefined)
     {
         return new SlashCommandBuilder().setName(effect).setDescription(description)
 	    .addUserOption(option =>
 		    option.setName("user")
-			    .setDescription(`The user to ${effect}.`)
-			    .setRequired(false))
+			    .setDescription(argDescription ? argDescription : `The user to ${effect}.`)
+			    .setRequired(false));
     },
-	async execute(effect, interaction)
+	async execute(interaction)
 	{
 		var user = interaction.options.getUser("user");
-		return await applyEffect(effect, user ? user.username : undefined, interaction);
+		return await findTarget(user.username, interaction)
 	},
-	async executeManual(effect, message, commandEndIndex)
+	async executeManual(message, commandEndIndex)
 	{
 		var user;
 		if(commandEndIndex != -1) //something typed after command
@@ -129,6 +141,7 @@ module.exports =
 					user = message.author.username;
 			}
 		}
-		return await applyEffect(effect, user, message, true);
+		
+		return await findTarget(user, message, true);
 	}
 };

@@ -1,22 +1,30 @@
 const superscript = require("superscript-text");
-var { removeEffect, generateSlashData, execute, executeManual } = require("../templates/user_effect_command.js");
+var { applyEffect, removeEffect, generateSlashData, execute, executeManual } = require("../templates/user_effect_command.js");
 
 module.exports = 
 {
 	refreshTemplate(client)
-	{ ({ removeEffect, generateSlashData, execute, executeManual } = client.commands.get("user_effect_command")); },
+	{ ({ applyEffect, removeEffect, generateSlashData, execute, executeManual } = client.commands.get("user_effect_command")); },
 	publicCommand: true, //WILL BE DEPLOYED GLOBALLY
 	cooldown: 5,
 	data: generateSlashData("reduce", "Makes a user speak in tiny text for 1 minute."),
 	async execute(interaction)
 	{
-		const effects = await execute("reduce", interaction);
-		await removeEffect("enlarge", interaction, effects);
+		const target = await execute(interaction);
+		if(target)
+		{
+			await applyEffect("reduce", target, interaction);
+			await removeEffect("enlarge", target, interaction);
+		}
 	},
 	async executeManual(message, commandEndIndex)
 	{
-		const effects = await executeManual("reduce", message, commandEndIndex);
-		await removeEffect("enlarge", message, effects);
+		const target = await executeManual(message, commandEndIndex);
+		if(target)
+		{
+			await applyEffect("reduce", target, message);
+			await removeEffect("enlarge", target, message);
+		}
 	},
 	transformMessage(msgInfo, effectInfo)
 	{

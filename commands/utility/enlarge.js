@@ -1,23 +1,29 @@
-var { removeEffect, generateSlashData, execute, executeManual } = require("../templates/user_effect_command.js");
+var { applyEffect, removeEffect, generateSlashData, execute, executeManual } = require("../templates/user_effect_command.js");
 
 module.exports = 
 {
 	refreshTemplate(client)
-	{ ({ removeEffect, generateSlashData, execute, executeManual } = client.commands.get("user_effect_command")); },
+	{ ({ applyEffect, removeEffect, generateSlashData, execute, executeManual } = client.commands.get("user_effect_command")); },
 	publicCommand: true, //WILL BE DEPLOYED GLOBALLY
 	cooldown: 5,
 	data: generateSlashData("enlarge", "Makes a user speak in bolded, all caps text for 1 minute."),
 	async execute(interaction)
 	{
-		const effects = await execute("enlarge", interaction);
-		if(effects)
-			await removeEffect("reduce", interaction, effects);
+		const target = await execute(interaction);
+		if(target)
+		{
+			await applyEffect("enlarge", target, interaction);
+			await removeEffect("reduce", target, interaction);
+		}
 	},
 	async executeManual(message, commandEndIndex)
 	{
-		const effects = await executeManual("enlarge", message, commandEndIndex);
-		if(effects)
-			await removeEffect("reduce", message, effects);
+		const target = await executeManual(message, commandEndIndex);
+		if(target)
+		{
+			await applyEffect("enlarge", target, message);
+			await removeEffect("reduce", target, message);
+		}
 	},
 	transformMessage(msgInfo, effectInfo)
 	{
