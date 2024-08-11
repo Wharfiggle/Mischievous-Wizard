@@ -118,7 +118,7 @@ module.exports =
 	async execute(interaction)
 	{
 		var user = interaction.options.getUser("user");
-		return await findTarget(user.username, interaction)
+		return await findTarget(user ? user.username : undefined, interaction);
 	},
 	async executeManual(message, commandEndIndex)
 	{

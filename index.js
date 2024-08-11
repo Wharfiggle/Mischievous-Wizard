@@ -85,6 +85,8 @@ client.on('messageCreate', async (message) =>
 	const prefixMatch = message.content.toLowerCase().match(/^(i cast\.*|🪄|🧙‍♀️|🧙|🧙‍♂️)\s*/);
 	if(prefixMatch)
 	{
+		console.log(`Command \"${command}\" manually called by user \"${message.author.username}\" (user id: ${message.author})`);
+
 		const prefix = prefixMatch[0];
 		var commandEndIndex = message.content.indexOf(" ", prefix.length); //index of first space in string after prefix
 		var command = message.content.substring(prefix.length, (commandEndIndex == -1) ? undefined : commandEndIndex).toLowerCase();
