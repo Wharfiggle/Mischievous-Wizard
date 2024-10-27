@@ -12,8 +12,8 @@ module.exports =
 		const target = await execute(interaction);
 		if(target)
 		{
-			await applyEffect("enlarge", target, interaction);
 			await removeEffect("reduce", target, interaction);
+			await applyEffect("enlarge", target, interaction);
 		}
 	},
 	async executeManual(message, commandEndIndex)
@@ -21,8 +21,8 @@ module.exports =
 		const target = await executeManual(message, commandEndIndex);
 		if(target)
 		{
-			await applyEffect("enlarge", target, message);
 			await removeEffect("reduce", target, message);
+			await applyEffect("enlarge", target, message);
 		}
 	},
 	transformMessage(msgInfo, effectInfo)

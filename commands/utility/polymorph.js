@@ -73,8 +73,8 @@ module.exports =
 		const target = await execute(interaction);
 		if(target)
 		{
-			const effects = await applyEffect("polymorph", target, interaction);
 			await removeEffect("disguiseself", target, interaction);
+			const effects = await applyEffect("polymorph", target, interaction);
 			effects.get("polymorph").animal = getRandomAnimal();
 		}
 	},
@@ -83,8 +83,8 @@ module.exports =
 		const target = await executeManual(message, commandEndIndex);
 		if(target)
 		{
-			const effects = await applyEffect("polymorph", target, message);
 			await removeEffect("disguiseself", target, message);
+			const effects = await applyEffect("polymorph", target, message);
 			effects.get("polymorph").animal = getRandomAnimal();
 		}
 	},

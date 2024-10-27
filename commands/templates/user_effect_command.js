@@ -10,8 +10,8 @@ async function findTarget(username, replier, manual = false)
 		if(repliedMsg)
 		{
 			username = repliedMsg.author.username;
-			if(username == "Mischievous Wizard") //cant let users target the wizard, will cause an infinite loop
-				username = replier.author.username;
+			//if(username == "Mischievous Wizard") //cant let users target the wizard, will cause an infinite loop
+			//	username = replier.author.username;
 		}
 	}
 	//if no message was replied to, get username of last message sent before command
@@ -22,8 +22,8 @@ async function findTarget(username, replier, manual = false)
 		var i = 0;
 		for(m of messages)
 		{
-			if(m[1].author.username == "Mischievous Wizard")
-				continue;
+			//if(m[1].author.username == "Mischievous Wizard")
+			//	continue;
 			if((i == 0 && !manual) || i > 0)
 			{
 				username = m[1].author.username;
@@ -143,7 +143,7 @@ module.exports =
 				user = message.content.substring(commandEndIndex + 1);
 				if(!user.match(/\w/)) //username manually entered has no letters, so it's a censored message and we should ignore the request
 					return;
-				else if(user.toLowerCase() == "me" || user.toLowerCase() == "myself" || user == "Mischievous Wizard") //cant let users target the wizard
+				else if(user.toLowerCase() == "me" || user.toLowerCase() == "myself") //|| user == "Mischievous Wizard") //cant let users target the wizard
 					user = message.author.username;
 			}
 		}

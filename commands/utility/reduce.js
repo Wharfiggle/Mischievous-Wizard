@@ -13,8 +13,8 @@ module.exports =
 		const target = await execute(interaction);
 		if(target)
 		{
-			await applyEffect("reduce", target, interaction);
 			await removeEffect("enlarge", target, interaction);
+			await applyEffect("reduce", target, interaction);
 		}
 	},
 	async executeManual(message, commandEndIndex)
@@ -22,8 +22,8 @@ module.exports =
 		const target = await executeManual(message, commandEndIndex);
 		if(target)
 		{
-			await applyEffect("reduce", target, message);
 			await removeEffect("enlarge", target, message);
+			await applyEffect("reduce", target, message);
 		}
 	},
 	transformMessage(msgInfo, effectInfo)
