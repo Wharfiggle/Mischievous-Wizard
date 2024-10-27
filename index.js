@@ -74,8 +74,8 @@ client.on('messageCreate', async (message) =>
 	var isWebhook = false;
 	if(message.webhookId) //is a webhook
 	{
-		if(!client.webhookAvatars.has(message.author.username))
-			client.webhookAvatars.set(message.author.username, "https://cdn.discordapp.com/avatars/" + message.author.id + "/" + message.author.avatar + ".jpeg");
+		if(!client.webhookAvatars.has(message.author.username) && message.author.avatar)
+			client.webhookAvatars.set(message.author.username, "https://cdn.discordapp.com/avatars/" + message.author.id + "/" + message.author.avatar + ".png");
 		isWebhook = true;
 		if(webhooks.find(wh => wh.id == message.webhookId)) //webhook is ours
 			return;

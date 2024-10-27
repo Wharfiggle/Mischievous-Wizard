@@ -85,7 +85,7 @@ module.exports =
 					{
 						if(m[1].webhookId && m[1].author.username == username && m[1].author.avatar)
 						{
-							avatar = "https://cdn.discordapp.com/avatars/" + m[1].author.id + "/" + m[1].author.avatar + ".jpeg";
+							avatar = "https://cdn.discordapp.com/avatars/" + m[1].author.id + "/" + m[1].author.avatar + ".png";							
 							replier.client.webhookAvatars.set(username, avatar);
 							break;
 						}
