@@ -85,8 +85,6 @@ client.on('messageCreate', async (message) =>
 	const prefixMatch = message.content.toLowerCase().match(/^(i cast\.*|🪄|🧙‍♀️|🧙|🧙‍♂️)\s*/);
 	if(prefixMatch)
 	{
-		console.log(`Command \"${command}\" manually called by user \"${message.author.username}\" (user id: ${message.author})`);
-
 		const prefix = prefixMatch[0];
 		var commandEndIndex = message.content.indexOf(" ", prefix.length); //index of first space in string after prefix
 		var command = message.content.substring(prefix.length, (commandEndIndex == -1) ? undefined : commandEndIndex).toLowerCase();
@@ -96,7 +94,7 @@ client.on('messageCreate', async (message) =>
 			const afterCommand = message.content.substring(commandEndIndex + 1);
 			var secondSpaceIndex = afterCommand.indexOf(" ");
 			command += afterCommand.substring(0, (secondSpaceIndex == -1) ? undefined : secondSpaceIndex).toLowerCase();
-			commandEndIndex = (secondSpaceIndex == -1) ? -1 : commandEndIndex + secondSpaceIndex;
+			commandEndIndex = (secondSpaceIndex == -1) ? -1 : commandEndIndex + secondSpaceIndex + 1;
 		}
 		const punctuation = command.match(/(\.|!|\?)+$/); //get punctuation marks after command
 		if(punctuation)
@@ -109,6 +107,8 @@ client.on('messageCreate', async (message) =>
 			if(message.content.substring(commandEndIndex + 1, commandEndIndex + 12).toLowerCase() == "targetting ")
 				commandEndIndex += 11;
 		}
+
+		console.log(`Command \"${command}\" manually called by user \"${message.author.username}\" (user id: ${message.author})`);
 
 		try
 		{
@@ -155,7 +155,7 @@ client.on('messageCreate', async (message) =>
 
 	//delete effects from collection if they've expired
 	const now = Date.now();
-	for(e of effects) //e[0]: map key	e[1]: value
+	for(e of effects) //e[0]: map key	e[1]: effect info
 	{
 		if(e[1].expireTime == -1)
 		{

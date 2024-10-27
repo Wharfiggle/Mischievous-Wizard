@@ -12,8 +12,8 @@ module.exports =
 		const target = await execute(interaction);
 		if(target)
 		{
-			const effects = await applyEffect("disguiseself", interaction.author.username, interaction);
-			await removeEffect("polymorph", interaction.author.username, interaction);
+			const effects = await applyEffect("disguiseself", interaction.user.username, interaction, `Successfully disguised yourself as ${target}!`);
+			await removeEffect("polymorph", interaction.user.username, interaction);
 			effects.get("disguiseself").member = await getMember(target, interaction);
 		}
 	},
@@ -22,13 +22,17 @@ module.exports =
 		const target = await executeManual(message, commandEndIndex);
 		if(target)
 		{
-			const effects = await applyEffect("disguiseself", message.author.username, message);
+			const effects = await applyEffect("disguiseself", message.author.username, message, `Successfully disguised yourself as ${target}!`);
 			await removeEffect("polymorph", message.author.username, message);
 			effects.get("disguiseself").member = await getMember(target, message);
 		}
 	},
 	transformMessage(msgInfo, effectInfo)
 	{
+		console.log(`Member: ${effectInfo.member}`);
+		console.log(`Nickname: ${effectInfo.member.nickname}`);
+		console.log(`USername: ${effectInfo.member.user.username}`);
+
 		msgInfo.outputName = effectInfo.member.nickname ? effectInfo.member.nickname : effectInfo.member.user.username;
 		msgInfo.outputAvatar = effectInfo.member.webhookAvatar ? effectInfo.member.webhookAvatar : effectInfo.member.displayAvatarURL();
 		

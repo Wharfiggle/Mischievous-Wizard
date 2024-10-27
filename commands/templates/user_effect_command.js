@@ -43,7 +43,7 @@ async function findTarget(username, replier, manual = false)
 
 module.exports = 
 {
-	async applyEffect(effect, username, replier)
+	async applyEffect(effect, username, replier, successMessage = "")
 	{
 		//get all userEffects
 		const userEffects = replier.client.userEffects;
@@ -57,19 +57,24 @@ module.exports =
 		//set expireTime to -1 so we know to overwrite it whenever the user speaks next
 		effects.set(effect, { expireTime: -1 });
 
-		await replier.reply({ content: `Successfully cast ${effect} on ${username}!`, ephemeral: true});
+		//await replier.reply({ content: `Successfully cast ${effect} on ${username}!`, ephemeral: true });
+		if(successMessage == "")
+			successMessage = `Successfully cast ${effect} on ${username}!`;
+		await replier.reply({ content: successMessage, ephemeral: true });
 
 		return effects;
 	},
 	async getMember(username, replier)
 	{
-		const members = await replier.guild.members.list();
+		console.log(`searching for member ${username}`);
+		var members = await replier.guild.members.fetch();
 		var member = await members.find(m => m.user.username == username); //assume member username
-		if(!member) //not a member username
+		if(!member) //member not found, assume member nickname
 		{
-			member = await members.find(m => m.nickname == username); //assume member nickname
-			if(!member) //not a member nickname either, must be a webhook
+			var member = await members.find(m => m.nickname == username); //assume member username
+			if(!member) //member not found, must be a webhook
 			{
+				console.log(`no member with username or nickname ${username}, assuming a bot`);
 				var avatar = replier.client.webhookAvatars.get(username);
 				if(!avatar) //avatar isnt cached
 				{
@@ -81,12 +86,13 @@ module.exports =
 						if(m[1].webhookId && m[1].author.username == username && m[1].author.avatar)
 						{
 							avatar = "https://cdn.discordapp.com/avatars/" + m[1].author.id + "/" + m[1].author.avatar + ".jpeg";
-							console.log(avatar);
 							replier.client.webhookAvatars.set(username, avatar);
 							break;
 						}
 					}
 				}
+				else
+					console.log("found avatar in cache");
 
 				return { nickname: username, webhookAvatar: avatar, user:{ username: username } };
 			}
