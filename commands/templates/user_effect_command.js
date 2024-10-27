@@ -22,8 +22,8 @@ async function findTarget(username, replier, manual = false)
 		var i = 0;
 		for(m of messages)
 		{
-			//if(m[1].author.username == "Mischievous Wizard")
-			//	continue;
+			if(m[1].author.username == "Mischievous Wizard") //ignore Mischievous Wizard
+				continue;
 			if((i == 0 && !manual) || i > 0)
 			{
 				username = m[1].author.username;
