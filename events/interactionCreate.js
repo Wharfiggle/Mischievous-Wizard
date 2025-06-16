@@ -8,13 +8,13 @@ module.exports =
 		if(!interaction.isChatInputCommand())
 			return;
 
+		const now = Date.now();
 		const command = interaction.client.commands.get(interaction.commandName);
 
 		if(!command)
-		{
-			console.error(`No command matching ${interaction.commandName} was found.`);
-			return;
-		}
+			return console.error(`No command matching ${interaction.commandName} was found.`);
+		else if(interaction.createdTimestamp + 2500 <= now) //interactions only last for 3 seconds from creation, give at least 0.5 seconds for command
+			return console.log("Caught expired interaction, discarding");
 
 		console.log(`Command \"${interaction.commandName}\" called to execute by user \"${interaction.user.username}\" (user id: ${interaction.user})`);
 
@@ -25,7 +25,6 @@ module.exports =
 		if(!cooldowns.has(command.data.name))
 			cooldowns.set(command.data.name, new Collection());
 
-		const now = Date.now();
 		const timestamps = cooldowns.get(command.data.name);
 		//if command.cooldown is valid, use that, otherwise default to 3 seconds
 		//" * 1_000" converts to milliseconds for straightforward calculation
