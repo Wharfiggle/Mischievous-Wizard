@@ -31,7 +31,7 @@ module.exports =
 	{
 		console.log(`Member: ${effectInfo.member}`);
 		console.log(`Nickname: ${effectInfo.member.nickname}`);
-		console.log(`USername: ${effectInfo.member.user.username}`);
+		console.log(`Username: ${effectInfo.member.user.username}`);
 
 		msgInfo.outputName = effectInfo.member.nickname ? effectInfo.member.nickname : effectInfo.member.user.username;
 		msgInfo.outputAvatar = effectInfo.member.webhookAvatar ? effectInfo.member.webhookAvatar : effectInfo.member.displayAvatarURL();

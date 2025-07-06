@@ -185,13 +185,13 @@ client.on('messageCreate', async (message) =>
 	{
 		outputName : nickname ? nickname : username,
 		outputMessage : message.content,
-		outputAvatar : message.author.displayAvatarURL()
+		outputAvatar : message.author.displayAvatarURL(),
 	}
 
 	//sort effects based on order of effect names in effectPriority
 	//need effects to be applied in a certain order for best results
-	const effectPriority = ["polymorph", "enlarge", "reduce"];
-	effects = [...effects.entries()].sort( (a, b) => effectPriority.indexOf(a[0]) < effectPriority.indexOf(b[0]) );
+	const effectPriority = ["polymorph", "disguiseself", "silence", "enlarge", "reduce"];
+	effects = [...effects.entries()].sort( (a, b) => effectPriority.indexOf(a[0]) - effectPriority.indexOf(b[0]) );
 
 	try
 	{

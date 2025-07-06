@@ -14,7 +14,29 @@ module.exports =
 		const command = interaction.client.commands.get(commandName);
 
 		if(!command)
+		{
+			//possibly new command, look for it in files
+			const fs = require("fs");
+			const commandPath = __dirname + "\\" + commandName + ".js";
+
+			try
+			{
+  				const stats = fs.statSync(commandPath);
+				if(stats.isFile())
+				{
+					const command = require(commandPath);
+					if("data" in command && "execute" in command)
+					{
+						interaction.client.commands.set(command.data.name, command);
+						return interaction.reply(`Command \`${commandName}\` was loaded!`);
+					}
+				}
+			}
+			catch (err) { console.error(err); }
+
+			//not new command, just typo
 			return interaction.reply(`There is no command with name \`${commandName}\`!`);
+		}
 
 		const folder = interaction.client.templates.includes(commandName) ? "templates" : "utility";
 

@@ -13,6 +13,7 @@ module.exports =
 		if(target)
 		{
 			await removeEffect("reduce", target, interaction);
+			await removeEffect("silence", target, interaction);
 			await applyEffect("enlarge", target, interaction);
 		}
 	},
@@ -22,6 +23,7 @@ module.exports =
 		if(target)
 		{
 			await removeEffect("reduce", target, message);
+			await removeEffect("silence", target, message);
 			await applyEffect("enlarge", target, message);
 		}
 	},
