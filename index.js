@@ -242,6 +242,8 @@ client.on('messageCreate', async (message) =>
 			avatarURL: msgInfo.outputAvatar
 		});
 
+		console.log(`${message.author} tried to say ${message.content}`);
+
 		message.delete();
 	}
 	catch(error) { console.error("Error trying to send a message: ", error); }
