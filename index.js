@@ -1,12 +1,3 @@
-const express = require("express");
-const app = express();
-
-app.listen(3003, () => 
-{ console.log("Project is running!"); });
-
-app.get("/", (req, res) => 
-{ res.send("Hello world!"); });
-
 // Require the necessary discord.js classes
 const fs = require("node:fs");
 const path = require("node:path");
@@ -60,6 +51,17 @@ for(const file of eventFiles)
 	else
 		client.on(event.name, (...args) => event.execute(...args));
 }
+
+//handle rejections and exceptions that slip through, prevent crashing
+process.on("unhandledRejection", async(reason, promise) => {
+	console.log("Unhandled rejection at: " + promise + ", reason: " + reason);
+});
+process.on("uncaughtException", async(error) => {
+	console.log("Uncaught exception: " + error);
+});
+process.on("uncaughtExceptionMonitor", async(error, origin) => {
+	console.log("Uncaught exception monitor: " + error + ", origin: " + origin);
+})
 
 
 

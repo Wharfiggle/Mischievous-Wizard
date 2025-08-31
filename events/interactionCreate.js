@@ -13,8 +13,6 @@ module.exports =
 
 		if(!command)
 			return console.error(`No command matching ${interaction.commandName} was found.`);
-		else if(interaction.createdTimestamp + 2500 <= now) //interactions only last for 3 seconds from creation, give at least 0.5 seconds for command
-			return console.log("Caught expired interaction, discarding");
 
 		console.log(`Command \"${interaction.commandName}\" called to execute by user \"${interaction.user.username}\" (user id: ${interaction.user})`);
 
